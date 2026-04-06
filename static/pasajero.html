@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Tracker - Ver Mapa</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; }
+        .header { background: #2196F3; color: white; padding: 15px; text-align: center; }
+        .controls { background: white; padding: 10px; text-align: center; border-bottom: 1px solid #ddd; }
+        select, button { padding: 8px; margin: 5px; }
+        #map { height: 60vh; width: 100%; }
+        .stop-list { max-height: 30vh; overflow-y: auto; padding: 10px; background: #f9f9f9; }
+        .stop-item { padding: 10px; border-bottom: 1px solid #ddd; }
+        .status-near { color: #FF9800; font-weight: bold; }
+        .status-coming { color: #4CAF50; }
+        .status-passed { color: #f44336; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚍 Bus Tracker Managua</h1>
+        <p>Ubicación de buses en tiempo real</p>
+    </div>
+    
+    <div class="controls">
+        <select id="routeSelect">
+            <option value="SIS">Ruta SIS</option>
+            <option value="Masaya-Managua">Ruta Masaya-Managua</option>
+        </select>
+        <button onclick="cargarDatos()">🔄 Actualizar</button>
+        <a href="/" style="text-decoration:none;">← Volver</a>
+    </div>
+    
+    <div id="map"></div>
+    <div id="stopList" class="stop-list">Cargando...</div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let mapa, marcadoresBuses = {}, rutaActual = 'SIS';
+        
+        function iniciarMapa() {
+            mapa = L.map('map').setView([12.1470, -86.2730], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
+        }
+        
+        function calcularDistancia(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+        
+        async function cargarDatos() {
+            try {
+                const [stopsRes, busesRes] = await Promise.all([
+                    fetch(`/api/get_stops?route=${rutaActual}`),
+                    fetch('/api/get_buses')
+                ]);
+                
+                const stops = await stopsRes.json();
+                const buses = await busesRes.json();
+                const busesRuta = buses.filter(b => b.route_name === rutaActual);
+                
+                document.getElementById('stopList').innerHTML = '<h3>🚏 Paradas:</h3>';
+                
+                stops.forEach(stop => {
+                    let distancia = Infinity;
+                    busesRuta.forEach(bus => {
+                        const d = calcularDistancia(stop.lat, stop.lng, bus.lat, bus.lng);
+                        if (d < distancia) distancia = d;
+                    });
+                    
+                    let estado = '';
+                    if (busesRuta.length === 0) {
+                        estado = '<span class="status-passed">⏳ Sin buses activos</span>';
+                    } else if (distancia < 0.3) {
+                        estado = `<span class="status-near">🚍 ¡BUS LLEGANDO! (${(distancia*1000).toFixed(0)}m)</span>`;
+                    } else if (distancia < 1) {
+                        estado = `<span class="status-coming">🟢 Bus cerca (${(distancia*1000).toFixed(0)}m)</span>`;
+                    } else {
+                        estado = `<span class="status-passed">🔴 Bus a ${distancia.toFixed(1)} km</span>`;
+                    }
+                    
+                    document.getElementById('stopList').innerHTML += `
+                        <div class="stop-item">
+                            <strong>${stop.order}. ${stop.name}</strong><br>
+                            ${estado}
+                        </div>
+                    `;
+                });
+                
+                Object.values(marcadoresBuses).forEach(m => mapa.removeLayer(m));
+                marcadoresBuses = {};
+                
+                busesRuta.forEach(bus => {
+                    const icono = L.divIcon({ html: '🚍', iconSize: [30, 30] });
+                    const marker = L.marker([bus.lat, bus.lng], { icon: icono })
+                        .bindPopup(`Bus ${bus.bus_id}`)
+                        .addTo(mapa);
+                    marcadoresBuses[bus.bus_id] = marker;
+                });
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            iniciarMapa();
+            cargarDatos();
+            setInterval(cargarDatos, 15000);
+            document.getElementById('routeSelect').onchange = () => {
+                rutaActual = document.getElementById('routeSelect').value;
+                cargarDatos();
+            };
+        });
+    </script>
+</body>
+</html>
