@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Tracker Managua</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .logo { font-size: 64px; margin-bottom: 16px; }
+        h1 { color: #333; font-size: 28px; margin-bottom: 8px; }
+        .subtitle { color: #666; margin-bottom: 32px; }
+        .menu { display: flex; flex-direction: column; gap: 16px; margin: 32px 0; }
+        .btn {
+            padding: 18px 24px;
+            border: none;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-primary { background: linear-gradient(135deg, #2196F3, #1976D2); color: white; }
+        .btn-secondary { background: linear-gradient(135deg, #4CAF50, #45a049); color: white; }
+        .info-box {
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #666;
+            text-align: left;
+        }
+        .footer { margin-top: 24px; font-size: 12px; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🚍</div>
+        <h1>Bus Tracker Managua</h1>
+        <p class="subtitle">Sistema de monitoreo de buses en tiempo real</p>
+        
+        <div class="menu">
+            <a href="/static/pasajero.html" class="btn btn-primary">👥 Ver como Pasajero</a>
+            <a href="/driver" class="btn btn-secondary">🚍 Acceso Conductores</a>
+        </div>
+        
+        <div class="info-box">
+            <h3>📌 Instrucciones:</h3>
+            <p><strong>Pasajeros:</strong> Ve al mapa y selecciona tu ruta</p>
+            <p><strong>Conductores:</strong> Comparte tu ubicación GPS</p>
+        </div>
+        
+        <div class="footer">Transporte Urbano Colectivo - Managua, Nicaragua</div>
+    </div>
+</body>
+</html>
